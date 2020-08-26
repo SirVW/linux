@@ -1789,6 +1789,7 @@ static int qmi_wwan_manage_power(struct usbnet *dev, int on)
 	struct qmi_wwan_state *info = (void *)&dev->data;
 	int rv;
 
+	printk("[biao:%s]on:%d\n",__func__,on);
 	dev_dbg(&dev->intf->dev, "%s() pmcount=%d, on=%d\n", __func__,
 		atomic_read(&info->pmcount), on);
 
@@ -1822,6 +1823,7 @@ static int qmi_wwan_register_subdriver(struct usbnet *dev)
 	struct usb_driver *subdriver = NULL;
 	struct qmi_wwan_state *info = (void *)&dev->data;
 
+	printk("[biao:%s]\n",__func__);
 	/* collect bulk endpoints */
 	rv = usbnet_get_endpoints(dev, info->data);
 	if (rv < 0)
@@ -1864,7 +1866,7 @@ static int qmi_wwan_bind(struct usbnet *dev, struct usb_interface *intf)
 	int status = -1;
 	struct usb_driver *driver = driver_of(intf);
 	struct qmi_wwan_state *info = (void *)&dev->data;
-
+	printk("[biao:%s]\n",__func__);
 	BUILD_BUG_ON((sizeof(((struct usbnet *)0)->data) <
 		      sizeof(struct qmi_wwan_state)));
 
@@ -2011,6 +2013,7 @@ static void qmi_wwan_unbind(struct usbnet *dev, struct usb_interface *intf)
 	struct usb_driver *driver = driver_of(intf);
 	struct usb_interface *other;
 
+	printk("[biao:%s]\n",__func__);
 	if (dev->udev && dev->udev->state == USB_STATE_CONFIGURED) {
 		usb_control_msg(
 			interface_to_usbdev(intf),
@@ -2054,6 +2057,7 @@ static int qmi_wwan_suspend(struct usb_interface *intf, pm_message_t message)
 	struct qmi_wwan_state *info = (void *)&dev->data;
 	int ret;
 
+	printk("[biao:%s]\n",__func__);
 	/* Both usbnet_suspend() and subdriver->suspend() MUST return 0
 	 * in system sleep context, otherwise, the resume callback has
 	 * to recover device from previous suspend failure.
@@ -2086,12 +2090,16 @@ static int qmi_wwan_resume(struct usb_interface *intf)
 	ret = usbnet_resume(intf);
 	if (ret < 0 && callsub)
 		info->subdriver->suspend(intf, PMSG_SUSPEND);
+
+	printk("[biao:%s]\n",__func__);
 err:
 	return ret;
 }
 
 static int qmi_wwan_reset_resume(struct usb_interface *intf)
 {
+
+	printk("[biao:%s]\n",__func__);
 	dev_info(&intf->dev, "device do not support reset_resume\n");
 	intf->needs_binding = 1;
 	return -EOPNOTSUPP;
@@ -2101,6 +2109,7 @@ static int rmnet_usb_bind(struct usbnet *dev, struct usb_interface *intf)
 {	
 	int status = qmi_wwan_bind(dev, intf);
 
+	printk("[biao:%s]status:%d\n",__func__,status);
 	if (!status) {
 		struct qmi_wwan_state *info = (void *)&dev->data;
 		sQmiWwanQmap *pQmapDev = (sQmiWwanQmap *)info->unused;
@@ -2135,7 +2144,7 @@ static int rmnet_usb_bind(struct usbnet *dev, struct usb_interface *intf)
 
 static struct sk_buff *rmnet_usb_tx_fixup(struct usbnet *dev, struct sk_buff *skb, gfp_t flags)
 {
-	//printk("%s skb=%p, len=%d, protocol=%x, hdr_len=%d\n", __func__, skb, skb->len, skb->protocol, skb->hdr_len);
+	printk("[biao]%s skb=%p, len=%d, protocol=%x, hdr_len=%d\n", __func__, skb, skb->len, skb->protocol, skb->hdr_len);
 	if (skb->protocol != htons(ETH_P_MAP)) {
 		dev_kfree_skb_any(skb);
 		return NULL;
@@ -2148,7 +2157,7 @@ static int rmnet_usb_rx_fixup(struct usbnet *dev, struct sk_buff *skb)
 {
 	struct net_device	*net = dev->net;
 
-	//printk("%s skb=%p, len=%d, protocol=%x, hdr_len=%d\n", __func__, skb, skb->len, skb->protocol, skb->hdr_len);
+	printk("[biao]%s skb=%p, len=%d, protocol=%x, hdr_len=%d\n", __func__, skb, skb->len, skb->protocol, skb->hdr_len);
 	if (net->type == ARPHRD_ETHER && skb_headroom(skb) >= ETH_HLEN) {
 		//usbnet.c rx_process() usbnet_skb_return() eth_type_trans()
 		skb_push(skb, ETH_HLEN);
@@ -2171,6 +2180,8 @@ static void _rmnet_usb_rx_handler(struct usbnet *dev, struct sk_buff *skb_in)
 	struct sk_buff_head skb_chain;
 	uint dl_minimum_padding = 0;
 
+
+	printk("[biao:%s]\n",__func__);
 	if (pQmapDev->qmap_version == 9)
 		dl_minimum_padding = pQmapDev->tx_ctx.dl_minimum_padding;
 
@@ -2287,6 +2298,7 @@ static rx_handler_result_t rmnet_usb_rx_handler(struct sk_buff **pskb)
 	struct sk_buff *skb = *pskb;
 	struct usbnet *dev;
 
+	printk("[biao:%s]\n",__func__);
 	if (!skb)
 		goto done;
 
@@ -2386,6 +2398,7 @@ static int qmi_wwan_probe(struct usb_interface *intf,
 {
 	struct usb_device_id *id = (struct usb_device_id *)prod;
 
+	printk("[biao:%s]\n",__func__);
 	/* Workaround to enable dynamic IDs.  This disables usbnet
 	 * blacklisting functionality.  Which, if required, can be
 	 * reimplemented here by using a magic "blacklist" value
@@ -2410,6 +2423,7 @@ static int qmap_qmi_wwan_probe(struct usb_interface *intf,
 {
 	int status = qmi_wwan_probe(intf, prod);
 
+	printk("[biao:%s]status:%d\n",__func__,status);
 	if (!status) {
 		struct usbnet *dev = usb_get_intfdata(intf);
 		struct qmi_wwan_state *info = (void *)&dev->data;
@@ -2456,6 +2470,8 @@ static void qmap_qmi_wwan_disconnect(struct usb_interface *intf)
 	struct qmi_wwan_state *info;
 	sQmiWwanQmap *pQmapDev;
 	uint i;
+
+	printk("[biao:%s]\n",__func__);
 
 	if (!dev)
 		return;
